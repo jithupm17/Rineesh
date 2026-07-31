@@ -14,7 +14,7 @@ button,input,select,textarea{font:inherit}.top{position:sticky;top:0;z-index:5;b
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#101a30;border:1px solid var(--line);border-radius:12px;padding:10px}.stat b{font-size:21px;display:block}
 .nav{max-height:calc(100vh - 285px);overflow:auto;display:grid;gap:7px;margin-top:12px}.nav button{text-align:left;background:#10182b;color:var(--text);border:1px solid transparent;border-radius:10px;padding:9px;cursor:pointer}.nav button.active{border-color:var(--blue)}.nav button.ok{box-shadow:inset 3px 0 var(--green)}.nav button.bad{box-shadow:inset 3px 0 var(--red)}
 .q{font-size:20px;font-weight:800;line-height:1.45;margin:8px 0 16px;white-space:pre-wrap}.opts{display:grid;gap:10px}.opt{display:flex;gap:11px;text-align:left;width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:#101a30;color:var(--text);cursor:pointer}.opt.sel{border-color:var(--blue)}.opt.ok{border-color:var(--green);background:#10311f}.opt.bad{border-color:var(--red);background:#35131b}.letter{font-weight:900;color:#bfdbfe}
-.box{margin-top:13px;padding:13px;border:1px solid var(--line);border-radius:12px;background:#0a1222;line-height:1.55}.hidden{display:none}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.progress{height:8px;border-radius:99px;background:#18243c;overflow:hidden;margin-top:10px}.progress div{height:100%;background:#3b82f6}
+.box{margin-top:13px;padding:13px;border:1px solid var(--line);border-radius:12px;background:#0a1222;line-height:1.55}.reason-head{font-size:18px;font-weight:900;margin-bottom:10px}.reason-card{padding:12px 0;border-top:1px solid var(--line)}.reason-card:first-of-type{border-top:0}.reason-title{font-weight:850;margin-bottom:5px}.reason-ok{color:#4ade80}.reason-bad{color:#fda4af}.takeaway{margin-top:12px;padding:11px;border:1px solid #334155;border-radius:10px;background:#101a30}.source-note{margin-top:10px;color:var(--muted);font-size:13px}.hidden{display:none}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.progress{height:8px;border-radius:99px;background:#18243c;overflow:hidden;margin-top:10px}.progress div{height:100%;background:#3b82f6}
 .right{position:sticky;top:75px}.chat{height:370px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px;background:#080f1e}.msg{padding:10px 11px;border-radius:11px;margin:0 0 9px;white-space:pre-wrap;line-height:1.45}.me{background:#1e3a8a}.ai{background:#162238}.err{background:#41151b}.small{font-size:12px}.apirow{display:grid;grid-template-columns:1fr auto;gap:8px}.modelrow{display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px}textarea{width:100%;resize:vertical;min-height:84px}
 @media(max-width:1200px){.grid{grid-template-columns:1fr}.right{position:static}.nav{max-height:280px}}
 
@@ -82,7 +82,7 @@ button,input,select,textarea{font:inherit}.top{position:sticky;top:0;z-index:5;b
 
 <main class="card"><div class="head"><b id="qnum">Question</b><span class="grow"></span><button class="btn" id="prev">← Prev</button><button class="btn" id="next">Next →</button><button class="btn" id="flag">☆ Flag</button></div>
 <div class="body">
-<div class="toolbar"><span class="pill" id="status">Unanswered</span><span class="pill" id="idx"></span><span class="grow"></span><button class="btn good" id="check">Check answer</button><button class="btn" id="reason">Explain</button></div>
+<div class="toolbar"><span class="pill" id="status">Unanswered</span><span class="pill" id="idx"></span><span class="grow"></span><button class="btn good" id="check">Submit answer</button><button class="btn" id="reason">Explain</button></div>
 <div class="q" id="question"></div><div class="opts" id="options"></div>
 <div id="feedback" class="box hidden"></div><div id="explanation" class="box hidden"></div>
 </div></main>
@@ -148,8 +148,40 @@ function render(){
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function renderNav(){let v=visible();$('count').textContent=v.length+' / '+Q.length;$('nav').innerHTML='';v.forEach(i=>{let b=document.createElement('button');b.className=(i===cur?'active ':'')+(status(i)==='correct'?'ok':status(i)==='wrong'?'bad':'');b.innerHTML='<b>'+(i+1)+'.</b> '+esc(Q[i].q.slice(0,80))+(state.flags[i]?' ★':'');b.onclick=()=>{cur=i;save();render()};$('nav').appendChild(b)})}
 function stats(){let a=Object.keys(state.answers).length,c=Object.keys(state.answers).filter(i=>status(+i)==='correct').length,f=Object.keys(state.flags).filter(i=>state.flags[i]).length;$('answered').textContent=a;$('score').textContent=(a?Math.round(c/a*100):0)+'%';$('flagged').textContent=f;$('bar').style.width=(a/Q.length*100)+'%'}
-$('check').onclick=()=>{if(state.answers[cur]===undefined){$('feedback').textContent='Choose an answer first.';$('feedback').classList.remove('hidden');return}state.checked[cur]=true;save();render();let ok=state.answers[cur]===Q[cur].ans;$('feedback').innerHTML=ok?'<b style="color:#4ade80">Correct.</b>':'<b style="color:#fb7185">Incorrect.</b> Correct answer: <b>'+esc(Q[cur].options[Q[cur].ans])+'</b>';$('feedback').classList.remove('hidden')};
-$('reason').onclick=()=>{let x=Q[cur],ce=x.explanations.find(e=>e.includes('Correct:'))||x.explanations[x.ans]||x.hint;$('explanation').innerHTML='<b>Why:</b> '+esc(strip(ce))+(x.hint?'<br><br><b>Hint:</b> '+esc(x.hint):'');$('explanation').classList.remove('hidden')};
+$('check').onclick=()=>{if(state.answers[cur]===undefined){$('feedback').textContent='Choose an answer first.';$('feedback').classList.remove('hidden');return}state.checked[cur]=true;save();render();let ok=state.answers[cur]===Q[cur].ans;$('feedback').innerHTML=ok?'<b style="color:#4ade80">Correct.</b>':'<b style="color:#fb7185">Incorrect.</b> Correct answer: <b>'+esc(Q[cur].options[Q[cur].ans])+'</b>';$('feedback').classList.remove('hidden')
+  if (state.answers[cur] !== undefined) $('reason').click();
+};
+function cleanReason(s){
+ let t=strip(s||'');
+ t=t.replace(/^(Correct|Incorrect):\s*/i,'');
+ t=t.replace(/\b\d+\s+Questions and Answers PDF\s+\d+\/\d+\b/gi,' ');
+ t=t.replace(/\bReference\s*=.*$/i,'');
+ t=t.replace(/https?:\/\/\S+/gi,'');
+ t=t.replace(/\s+/g,' ').trim();
+ return t;
+}
+function optionName(o){return String(o||'').replace(/^\s*[A-H][.)]?\s*/i,'').trim()}
+function fallbackWrong(x,i,correctReason){
+ const wrong=optionName(x.options[i]), right=optionName(x.options[x.ans]);
+ return `${wrong} is not the best answer for this scenario. The question is testing the distinction between ${wrong} and ${right}; the scenario's requirements are better matched by ${right}.`;
+}
+function shortTakeaway(x){
+ return `Best answer: ${optionName(x.options[x.ans])}. Focus on what the scenario is asking the control or concept to accomplish, then eliminate choices that solve a different problem.`;
+}
+$('reason').onclick=()=>{
+ let x=Q[cur];
+ let correctReason=cleanReason(x.explanations?.[x.ans]||x.explanations?.find(e=>String(e).includes('Correct:'))||x.hint||'');
+ let html='<div class="reason-head">Answer breakdown</div>';
+ x.options.forEach((o,i)=>{
+   let raw=cleanReason(x.explanations?.[i]||'');
+   let generic=/^This option is incorrect based on the provided explanation\.?$/i.test(raw)||!raw;
+   let reason=i===x.ans?(correctReason||`${optionName(o)} best matches the scenario.`):(generic?fallbackWrong(x,i,correctReason):raw);
+   html+=`<div class="reason-card"><div class="reason-title ${i===x.ans?'reason-ok':'reason-bad'}">${letters[i]}. ${esc(optionName(o))} — ${i===x.ans?'✓ Correct':'✗ Why it is wrong'}</div><div>${esc(reason)}</div></div>`;
+ });
+ html+=`<div class="takeaway"><b>🧠 Exam takeaway</b><br>${esc(shortTakeaway(x))}</div>`;
+ html+='<div class="source-note">Long PDF references and page-number artifacts are hidden to keep revision clean.</div>';
+ $('explanation').innerHTML=html;$('explanation').classList.remove('hidden')
+};
 $('flag').onclick=()=>{state.flags[cur]=!state.flags[cur];save();render()};
 $('next').onclick=()=>{let v=visible(),p=v.indexOf(cur);cur=v[p>=0&&p<v.length-1?p+1:0]??cur;save();render()};
 $('prev').onclick=()=>{let v=visible(),p=v.indexOf(cur);cur=v[p>0?p-1:v.length-1]??cur;save();render()};
