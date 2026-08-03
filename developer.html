@@ -1,1 +1,91 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security+ Developer Panel</title>
+
+    <style>
+        body{
+            font-family:Arial,Helvetica,sans-serif;
+            background:#f5f5f5;
+            margin:40px;
+        }
+
+        h1{
+            color:#0b5ed7;
+        }
+
+        .card{
+            background:white;
+            padding:20px;
+            border-radius:10px;
+            margin-bottom:20px;
+            box-shadow:0 2px 8px rgba(0,0,0,.1);
+        }
+
+        input{
+            width:100%;
+            padding:10px;
+            margin:8px 0;
+            font-size:16px;
+        }
+
+        button{
+            padding:10px 20px;
+            cursor:pointer;
+            font-size:16px;
+        }
+
+        pre{
+            background:#111;
+            color:#00ff66;
+            padding:15px;
+            overflow:auto;
+            border-radius:8px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Security+ Developer Panel</h1>
+
+<div class="card">
+
+<h2>Worker Status</h2>
+
+<button onclick="checkStatus()">Check API</button>
+
+</div>
+
+<div class="card">
+
+<h2>Response</h2>
+
+<pre id="result">
+Waiting...
+</pre>
+
+</div>
+
+<script>
+
+const API="https://security701-api.jithupm17.workers.dev";
+
+async function checkStatus(){
+
+const response=await fetch(API);
+
+const data=await response.json();
+
+document.getElementById("result").textContent=
+JSON.stringify(data,null,2);
+
+}
+
+</script>
+
+</body>
+</html>
